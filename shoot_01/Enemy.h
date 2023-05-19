@@ -112,6 +112,8 @@ protected:
 	void DestroyEnemy();
 
 private:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	int32 ExpImpulseRate;
 
 	FTimerHandle DeathTimer;
 	/** Time after death until Destroy  */

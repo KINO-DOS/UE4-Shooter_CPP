@@ -55,11 +55,19 @@ void AExplosive::BulletHit_Implementation(FHitResult HitResult, AActor* Shooter,
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Actor damaged by explosive: %s"), *Actor->GetName());
 
+		//UGameplayStatics::ApplyDamage(
+		//	Actor,
+		//	Damage,
+		//	ShooterController,
+		//	Shooter,
+		//	UDamageType::StaticClass()
+		//);
+
 		UGameplayStatics::ApplyDamage(
 			Actor,
 			Damage,
-			ShooterController,
-			Shooter,
+			nullptr,
+			this,
 			UDamageType::StaticClass()
 		);
 	}

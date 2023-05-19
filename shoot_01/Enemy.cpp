@@ -15,6 +15,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/BoxComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "Explosive.h"
 
 // Sets default values
 AEnemy::AEnemy() :
@@ -36,7 +37,8 @@ AEnemy::AEnemy() :
 	RightWeaponSocket(TEXT("FX_Trail_R_01")),
 	AttackWaitTime(1.f),
 	bDying(false),
-	DeathTime(4.f)
+	DeathTime(4.f),
+	ExpImpulseRate(100000)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -297,7 +299,6 @@ void AEnemy::ResetCanAttack()
 void AEnemy::FinishDeath()
 {
 	GetMesh()->bPauseAnims = true;
-
 	GetWorldTimerManager().SetTimer(DeathTimer, this, &AEnemy::DestroyEnemy, DeathTime);
 }
 
@@ -512,10 +513,60 @@ void AEnemy::BulletHit_Implementation(FHitResult HitResult, AActor* Shooter, ACo
 float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	//Set the Target Blackboard Key to agro the Character
-	if (EnemyController)
+	if (Cast<AShooterCharacter>(DamageCauser))
 	{
-		EnemyController->GetBlackBoardComponent()->SetValueAsObject(FName("Target"), DamageCauser);
+		UE_LOG(LogTemp, Warning, TEXT("IsShooter"));
+		if (EnemyController)
+		{
+			EnemyController->GetBlackBoardComponent()->SetValueAsObject(FName("Target"), DamageCauser);
+		}
+		
 	}
+	else if(Cast<AExplosive>(DamageCauser))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("IsExplosive"));
+		AExplosive* Explosive = Cast<AExplosive>(DamageCauser);
+		FVector ImpactVector = GetActorLocation() - Explosive->GetActorLocation();
+
+		FVector ExpDirection(0);
+		float ExpDistance;
+		ImpactVector.ToDirectionAndLength(ExpDirection, ExpDistance);
+
+		USkeletalMeshComponent* EnemyMesh = GetMesh();
+		EnemyMesh->SetSimulatePhysics(true);
+		EnemyMesh->SetEnableGravity(true);  //ÖØÁ¦	'
+		//EnemyMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		EnemyMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		ExpDirection.Z = 0.2;
+		ExpDirection *= ExpImpulseRate;
+		UE_LOG(LogTemp, Warning, TEXT("ExpDirectio.Y = %f , ExpDirectio.X = %f , ExpDirectio.Z = %f"), ExpDirection.Y, ExpDirection.X, ExpDirection.Z);
+		GetMesh()->AddImpulse(ExpDirection, FName(TEXT("root")));
+		//GetMesh()->AddImpulse(ExpDirection * 1000000, FName(TEXT("root")));
+
+		
+
+	
+
+		EnemyMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+		EnemyMesh->SetCollisionResponseToChannel(
+			ECollisionChannel::ECC_WorldStatic,
+			ECollisionResponse::ECR_Block);
+		
+
+		Health = 0.f;
+		Die();
+		//if (bDying) return;
+		//bDying = true;
+		//HideHealthBar();
+		//if (EnemyController)
+		//{
+		//	EnemyController->GetBlackboardComponent()->SetValueAsBool(FName("Dead"), true);
+		//	EnemyController->StopMovement();
+		//}
+		//GetMesh()->bPauseAnims = true;
+		return DamageAmount;
+	}
+
 	if(Health - DamageAmount <= 0.f)
 	{
 		Health = 0.f;
