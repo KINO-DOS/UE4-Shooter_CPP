@@ -84,7 +84,7 @@ void UShooterAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		{
 			//GEngine->AddOnScreenDebugMessage(1, 0.f, FColor::Red, RotationMessage);
 			//GEngine->AddOnScreenDebugMessage(1, 0.f, FColor::Yellow, MovementRotationMessage);
-			GEngine->AddOnScreenDebugMessage(1, 0.f, FColor::Cyan, MovementOffsetMessage);
+			//GEngine->AddOnScreenDebugMessage(1, 0.f, FColor::Cyan, MovementOffsetMessage);
 		}
 
 		bAiming = ShooterCharacter->GetAiming();
@@ -168,13 +168,13 @@ void UShooterAnimInstance::TurnInPlace()
 				const float YawExcess{ ABSRootYawOffset - 90.f };
 				RootYawOffset > 0 ? RootYawOffset -= YawExcess : RootYawOffset += YawExcess;
 			}
-			GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Red, FString::Printf(TEXT("TurnInPlace_RootYawOffset: %f"), RootYawOffset));
+			//GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Red, FString::Printf(TEXT("TurnInPlace_RootYawOffset: %f"), RootYawOffset));
 		}
 		else 
 		{
 			bTurningInPlace = false;
 		}
-		GEngine->AddOnScreenDebugMessage(5, -1, FColor::Yellow, FString::Printf(TEXT("RootYawOffset: %f"), RootYawOffset));
+		//GEngine->AddOnScreenDebugMessage(5, -1, FColor::Yellow, FString::Printf(TEXT("RootYawOffset: %f"), RootYawOffset));
 
 
 	}

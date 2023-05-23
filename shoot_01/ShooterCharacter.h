@@ -40,6 +40,8 @@ struct FInterpLocation
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FEquipItemDelegate, int32, CurrentSlotIndex, int32, NewSlotIndex);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHighlightIconDelegate, int32, SlotIndex, bool, bStartAnimation);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDeadDelegate);
+
 UCLASS()
 class SHOOT_01_API AShooterCharacter : public ACharacter
 {
@@ -329,6 +331,9 @@ private:
 	/** Delegate for sending slot information for playing the icon animation */
 	UPROPERTY(BlueprintAssignable, Category = Delegates, meta = (AllowPrivateAccess = "true"))
 		FHighlightIconDelegate HighlightIconDelegate;
+
+	UPROPERTY(BlueprintAssignable, Category = Delegates, meta = (AllowPrivateAccess = "true"))
+	FDeadDelegate CharacterDead;
 
 	/** An array of AItems for our Inventory */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))

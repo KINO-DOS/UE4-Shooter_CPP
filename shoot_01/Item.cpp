@@ -204,7 +204,7 @@ void AItem::SetItemProperties(EItemState State)
 		AreaSphere->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		//Òþ²ØÏÔÊ¾Sphere
-		AreaSphere->SetHiddenInGame(false);
+		AreaSphere->SetHiddenInGame(true);
 
 		//Set CollisionBox properties
 		CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);//ECR_Block);
@@ -249,7 +249,7 @@ void AItem::SetItemProperties(EItemState State)
 		AreaSphere->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		//Òþ²ØÏÔÊ¾Sphere
-		AreaSphere->SetHiddenInGame(false);
+		AreaSphere->SetHiddenInGame(true);
 
 		//Set CollisionBox properties
 		CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);

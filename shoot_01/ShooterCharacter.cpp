@@ -823,6 +823,7 @@ AWeapon* AShooterCharacter::SpawnDefaultWeapon()
 	{
 		// Spawn the Weapon
 		AWeapon* Weapon1 = GetWorld()->SpawnActor<AWeapon>(DefaultWeaponClass);
+		Weapon1->SetBaseProperty(EItemRarity::EIR_Damaged, EWeaponType::EWT_SubmachineGun);
 		EquipWeapon(Weapon1);
 		Inventory.Add(Weapon1);
 		EquippedWeapon->SetSlotIndex(0);
@@ -969,7 +970,11 @@ void AShooterCharacter::SwapWeapon(AWeapon* WeaponToSwap)
 	if (WeaponToSwap->GetWeaponType() == EquippedWeapon->GetWeaponType())
 	{
 		EquipWeapon(WeaponToSwap, true);
-	}	
+	}
+	else
+	{
+		WeaponToSwap->SetItemState(EItemState::EIS_PickedUp);			
+	}
 
 	Inventory[SlotIndex] = WeaponToSwap;
 	WeaponToSwap->SetSlotIndex(SlotIndex);
@@ -1434,6 +1439,7 @@ void AShooterCharacter::Die()
 		if (PC)
 		{
 			DisableInput(PC);
+			
 		}
 
 	}
@@ -1442,6 +1448,7 @@ void AShooterCharacter::Die()
 void AShooterCharacter::FinishDeath()
 {
 	GetMesh()->bPauseAnims = true;
+	CharacterDead.Broadcast();
 }
 
 void AShooterCharacter::UnHighlightInventorySlot()

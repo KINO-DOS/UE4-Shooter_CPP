@@ -6,6 +6,10 @@
 #include "GameFramework/PlayerController.h"
 #include "ShooterPlayerController.generated.h"
 
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStarTextAnim);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStopTextAnim);
+
 /**
  * 
  */
@@ -16,6 +20,10 @@ class SHOOT_01_API AShooterPlayerController : public APlayerController
 
 public:
 	AShooterPlayerController();
+
+
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -32,13 +40,31 @@ private:
 	//玩家得分
 	int PlayerScore;
 
+	UPROPERTY(visibleAnywhere, BlueprintReadWrite, Category = Widgets, meta = (AllowPrivateAccess = "true"))
+	bool WeaponCanUp;
+
+	UPROPERTY(visibleAnywhere, BlueprintReadWrite, Category = Widgets, meta = (AllowPrivateAccess = "true"))
+	bool OldWeaponCanUp;
+
+	UPROPERTY(BlueprintAssignable, Category = Delegates, meta = (AllowPrivateAccess = "true"))
+	FStarTextAnim StarTextAnim;
+
+	UPROPERTY(BlueprintAssignable, Category = Delegates, meta = (AllowPrivateAccess = "true"))
+	FStopTextAnim StopTextAnim;
 
 public:
 
+	//增加玩家得分
 	void AddPlayerScore(int Num);
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE int GetPlayerScore() const { return PlayerScore; }
-	//增加玩家得分
+
+	UFUNCTION(BlueprintCallable)
+	void SetWeaponCanUpTrue();
+
+	UFUNCTION(BlueprintCallable)
+	void SetWeaponCanUpFalse();
+	
 	
 };
