@@ -123,6 +123,7 @@ protected:
 	void FinishMovingSlide();
 	void UpdateSlideDisplacement();
 
+	void UpdateWeapType();
 private:
 	FTimerHandle ThrowWeaponTimer;
 	float ThrowWeaponTime;
@@ -230,6 +231,10 @@ private:
 	int32 PreviousMaterialIndex;
 
 public:
+	//UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable)
+	void SetBaseProperty(EItemRarity Rarity, EWeaponType Type);
+
 	/** Adds an impulse to the Weapon*/
 	void ThrowWeapon();
 

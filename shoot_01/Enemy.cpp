@@ -16,6 +16,9 @@
 #include "Components/BoxComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Explosive.h"
+#include "ShooterPlayerController.h"
+#include "GameFramework/CharacterMovementComponent.h"
+
 
 // Sets default values
 AEnemy::AEnemy() :
@@ -32,13 +35,16 @@ AEnemy::AEnemy() :
 	AttackRFast(TEXT("AttackRFast")),
 	AttackL(TEXT("AttackL")),
 	AttackR(TEXT("AttackR")),
+	AttackDouble(TEXT("DoublePain")),
 	BaseDamage(20.f),
 	LeftWeaponSocket(TEXT("FX_Trail_L_01")),
 	RightWeaponSocket(TEXT("FX_Trail_R_01")),
 	AttackWaitTime(1.f),
 	bDying(false),
 	DeathTime(4.f),
-	ExpImpulseRate(100000)
+	ExpImpulseRate(100000),
+	IsGuxMolten(false),
+	CanSetSpeed(true)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -154,10 +160,23 @@ void AEnemy::ShowHealthBar_Implementation()
 		HealthBarDisplayTime);
 }
 
-void AEnemy::Die()
+void AEnemy::Die(AController* Controler)
 {
 	if (bDying) return;
 	bDying = true;
+
+	// set collison presets for weapon boxes
+	LeftWeaponCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LeftWeaponCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	LeftWeaponCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	//LeftWeaponCollision->SetCollisionResponseToChannel(
+	//	ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	RightWeaponCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	RightWeaponCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	RightWeaponCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	//RightWeaponCollision->SetCollisionResponseToChannel(
+	//	ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	HideHealthBar();
 
@@ -171,6 +190,13 @@ void AEnemy::Die()
 		EnemyController->GetBlackboardComponent()->SetValueAsBool(FName("Dead"), true);
 		EnemyController->StopMovement();
 	}
+
+	AShooterPlayerController* PlayerControler = Cast<AShooterPlayerController>(Controler);
+	if (PlayerControler)
+	{	
+		PlayerControler->AddPlayerScore(GetDeadScore());
+	}
+
 }
 
 void AEnemy::PlayHitMontage(FName Section, float PlayRate)
@@ -255,6 +281,13 @@ void AEnemy::AgroSphereOverlap(UPrimitiveComponent* OverlappedComponent,AActor* 
 				EnemyController->GetBlackboardComponent()->SetValueAsObject(
 					TEXT("Target"),
 					Character);
+
+				if (CanSetSpeed)
+				{
+					GetCharacterMovement()->MaxWalkSpeed *= 2;
+					CanSetSpeed = false;
+				}
+
 			}
 		}
 
@@ -307,6 +340,14 @@ void AEnemy::DestroyEnemy()
 	Destroy();
 }
 
+void AEnemy::SetEndAttack(bool IsEnd)
+{
+	if (EnemyController)
+	{
+		EnemyController->GetBlackBoardComponent()->SetValueAsBool(FName("EndAttack"), IsEnd);
+	}
+}
+
 
 void AEnemy::PlayAttackMontage(FName Section, float PlayRate)
 {
@@ -342,7 +383,14 @@ FName AEnemy::GetAttackSectionName()
 		SectionName = AttackRFast;
 		break;
 	case 3:
-		SectionName = AttackL;
+		if (IsGuxMolten)
+		{
+			SectionName = AttackDouble;
+		}
+		else
+		{
+			SectionName = AttackL;
+		}	
 		break;
 	case 4:
 		SectionName = AttackR;
@@ -512,17 +560,49 @@ void AEnemy::BulletHit_Implementation(FHitResult HitResult, AActor* Shooter, ACo
 
 float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	//Set the Target Blackboard Key to agro the Character
-	if (Cast<AShooterCharacter>(DamageCauser))
+
+	//Set the value of the Target Blackboard Key
+	ACharacter* Character = EventInstigator->GetCharacter();
+	AShooterCharacter* Shooter = Cast<AShooterCharacter>(Character);
+	if (Shooter)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("IsShooter"));
-		if (EnemyController)
+		if(!Shooter->IsCombatState)
 		{
-			EnemyController->GetBlackBoardComponent()->SetValueAsObject(FName("Target"), DamageCauser);
-		}
-		
+			TArray<AActor*> Actors;
+			UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEnemy::StaticClass(), Actors);
+			for (AActor* PawnActor : Actors)
+			{
+				AEnemy* Enemy = Cast<AEnemy>(PawnActor);
+				if (Enemy)
+				{
+					Enemy->EnemyController->GetBlackboardComponent()->SetValueAsObject(
+						TEXT("Target"),
+						Shooter);
+
+					if (CanSetSpeed)
+					{
+						Enemy->GetCharacterMovement()->MaxWalkSpeed *= 2;
+						CanSetSpeed = false;
+					}					
+				}
+			}
+
+			Shooter->IsCombatState = true;
+		}	
 	}
-	else if(Cast<AExplosive>(DamageCauser))
+
+
+	//Set the Target Blackboard Key to agro the Character
+	//if (Cast<AShooterCharacter>(DamageCauser))
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("IsShooter"));
+	//	if (EnemyController)
+	//	{
+	//		EnemyController->GetBlackBoardComponent()->SetValueAsObject(FName("Target"), DamageCauser);
+	//	}
+	//	
+	//}
+	if(Cast<AExplosive>(DamageCauser) )
 	{
 		UE_LOG(LogTemp, Warning, TEXT("IsExplosive"));
 		AExplosive* Explosive = Cast<AExplosive>(DamageCauser);
@@ -531,50 +611,59 @@ float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AC
 		FVector ExpDirection(0);
 		float ExpDistance;
 		ImpactVector.ToDirectionAndLength(ExpDirection, ExpDistance);
-
-		USkeletalMeshComponent* EnemyMesh = GetMesh();
-		EnemyMesh->SetSimulatePhysics(true);
-		EnemyMesh->SetEnableGravity(true);  //重力	'
-		//EnemyMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-		EnemyMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		ExpDirection.Z = 0.2;
 		ExpDirection *= ExpImpulseRate;
 		UE_LOG(LogTemp, Warning, TEXT("ExpDirectio.Y = %f , ExpDirectio.X = %f , ExpDirectio.Z = %f"), ExpDirection.Y, ExpDirection.X, ExpDirection.Z);
-		GetMesh()->AddImpulse(ExpDirection, FName(TEXT("root")));
-		//GetMesh()->AddImpulse(ExpDirection * 1000000, FName(TEXT("root")));
-
-		
 
 	
+		if (!IsGuxMolten)
+		{
+			USkeletalMeshComponent* EnemyMesh = GetMesh();
+			EnemyMesh->SetSimulatePhysics(true);
+			EnemyMesh->SetEnableGravity(true);  //重力	'
+			//EnemyMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			EnemyMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
-		EnemyMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-		EnemyMesh->SetCollisionResponseToChannel(
-			ECollisionChannel::ECC_WorldStatic,
-			ECollisionResponse::ECR_Block);
-		
+			GetMesh()->AddImpulse(ExpDirection, FName(TEXT("root")));
+			EnemyMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+			EnemyMesh->SetCollisionResponseToChannel(
+				ECollisionChannel::ECC_WorldStatic,
+				ECollisionResponse::ECR_Block);
 
-		Health = 0.f;
-		Die();
-		//if (bDying) return;
-		//bDying = true;
-		//HideHealthBar();
-		//if (EnemyController)
-		//{
-		//	EnemyController->GetBlackboardComponent()->SetValueAsBool(FName("Dead"), true);
-		//	EnemyController->StopMovement();
-		//}
-		//GetMesh()->bPauseAnims = true;
+			Health = 0.f;
+
+			Die(EventInstigator);
+		}
+		else
+		{
+			if (Health - DamageAmount <= 0.f)
+			{
+				Health = 0.f;
+				Die(EventInstigator);
+			}
+			else
+			{
+				PlayHitMontage(FName("HitReactFront"));
+				SetStunned(true);
+				Health -= DamageAmount;
+				ShowHealthBar();
+			}
+		}
+
+
 		return DamageAmount;
 	}
 
 	if(Health - DamageAmount <= 0.f)
 	{
 		Health = 0.f;
-		Die(); 
+		Die(EventInstigator);
 		////PlayHitMontage(FName("DeathA"));
 	}
 	else
 	{
+		//PlayHitMontage(FName("HitReactFront"));
+		//SetStunned(true);
 		Health -= DamageAmount;
 	}
 

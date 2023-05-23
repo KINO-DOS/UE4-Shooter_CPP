@@ -16,7 +16,7 @@
 AItem::AItem() :
 	ItemName("Default"),
 	ItemCount(0),
-	ItemRarity(EItemRarity::EIR_Common),
+	ItemRarity(EItemRarity::EIR_Damaged),
 	ItemState(EItemState::EIS_Pickup),
 	//Item interp variables
 	ZCurveTime(0.7f),
@@ -48,7 +48,7 @@ AItem::AItem() :
 	CollisionBox->SetupAttachment(ItemMesh);
 
 	//设置碰撞类型和反应
-	CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(
 		ECollisionChannel::ECC_Visibility,
 		ECollisionResponse::ECR_Block);
@@ -59,6 +59,8 @@ AItem::AItem() :
 
 	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AreaSphere"));
 	AreaSphere->SetupAttachment(GetRootComponent());
+
+	SetItemProperties(ItemState);
 }
 
 // Called when the game starts or when spawned
@@ -110,6 +112,7 @@ void AItem::StartPulseTimer()
 		GetWorldTimerManager().SetTimer(PulseTimer, this, &AItem::ResetPulseTimer, PulseCurveTime);
 	}
 }
+
 
 void AItem::OnSphereOverlap(
 	UPrimitiveComponent* OverlappedComponent,
@@ -194,8 +197,8 @@ void AItem::SetItemProperties(EItemState State)
 		//Set mesh properties
 		ItemMesh->SetSimulatePhysics(false);
 		ItemMesh->SetVisibility(true);
-		ItemMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-		ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		ItemMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);//ECR_Ignore);
+		ItemMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);//(ECollisionEnabled::NoCollision);
 
 		//Set AreaSphere properties
 		AreaSphere->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
@@ -204,11 +207,11 @@ void AItem::SetItemProperties(EItemState State)
 		AreaSphere->SetHiddenInGame(false);
 
 		//Set CollisionBox properties
-		CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+		CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);//ECR_Block);
 		CollisionBox->SetCollisionResponseToChannel(
 			ECollisionChannel::ECC_Visibility,
 			ECollisionResponse::ECR_Block);
-		CollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		CollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);//QueryAndPhysics);
 		break;
 
 	case EItemState::EIS_Equipped:
@@ -454,12 +457,17 @@ void AItem::InitializeCustomDepth()
 
 void AItem::OnConstruction(const FTransform& Transform)
 {
+	UpdateItemRarity();
+}
+
+void AItem::UpdateItemRarity()
+{
 	// Load the data in the Item Raruty Data Table
 
 	//Path to the Item Rarity Data Table
 	FString RarityTablePath(TEXT("DataTable'/Game/_Game/DataTable/ItemRarityDataTable.ItemRarityDataTable'"));
 	UDataTable* RarityTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *RarityTablePath));
-	if(RarityTableObject)
+	if (RarityTableObject)
 	{
 		FItemRarityTable* RarityRow = nullptr;
 		switch (ItemRarity)
@@ -500,7 +508,7 @@ void AItem::OnConstruction(const FTransform& Transform)
 			DynamicMaterialInstance->SetVectorParameterValue(TEXT("FresnelColor"), GlowColor);
 			ItemMesh->SetMaterial(MaterialIndex, DynamicMaterialInstance);
 			EnableGlowMaterial();
-		}	
+		}
 	}
 }
 

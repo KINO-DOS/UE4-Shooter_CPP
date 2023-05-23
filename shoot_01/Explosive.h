@@ -41,7 +41,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float Damage;
 
+	
 public:	
+	bool CanCallBulletHit;
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 

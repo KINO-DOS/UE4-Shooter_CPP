@@ -12,7 +12,8 @@
 
 // Sets default values
 AExplosive::AExplosive() :
-	Damage(100.f)
+	Damage(100.f),
+	CanCallBulletHit(true)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -39,18 +40,19 @@ void AExplosive::Tick(float DeltaTime)
 
 void AExplosive::BulletHit_Implementation(FHitResult HitResult, AActor* Shooter, AController* ShooterController)
 {
+	CanCallBulletHit = false;
 	if (ExplodeSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, ExplodeSound, GetActorLocation());
 	}
 	if (ExplodeParticles)
 	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplodeParticles, HitResult.Location, FRotator(0.f), true);
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplodeParticles,GetActorLocation(), FRotator(0.f), true);//HitResult.Location
 	}
 
 	//  Apply Explosive damage
 	TArray<AActor*>OverlappingActors;
-	GetOverlappingActors(OverlappingActors, ACharacter::StaticClass());
+	GetOverlappingActors(OverlappingActors, AActor::StaticClass());
 	for(auto Actor: OverlappingActors)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Actor damaged by explosive: %s"), *Actor->GetName());
@@ -63,13 +65,32 @@ void AExplosive::BulletHit_Implementation(FHitResult HitResult, AActor* Shooter,
 		//	UDamageType::StaticClass()
 		//);
 
-		UGameplayStatics::ApplyDamage(
-			Actor,
-			Damage,
-			nullptr,
-			this,
-			UDamageType::StaticClass()
-		);
+		if(Cast<ACharacter>(Actor))
+		{
+			UGameplayStatics::ApplyDamage(
+				Actor,
+				Damage,
+				ShooterController,
+				this,
+				UDamageType::StaticClass()
+			);
+		}
+		else
+		{
+			AExplosive* Explosive = Cast<AExplosive>(Actor);
+			if (Explosive)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("GET:explosive: %s"), *Explosive->GetName());
+				if (Explosive->CanCallBulletHit)
+				{
+					Explosive->BulletHit_Implementation(HitResult, Shooter, ShooterController);
+				}
+
+			}
+		}
+
+
+
 	}
 
 

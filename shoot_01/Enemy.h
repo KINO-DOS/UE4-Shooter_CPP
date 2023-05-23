@@ -29,7 +29,7 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void HideHealthBar();
 
-	void Die();
+	void Die(AController* Controler);
 
 	void PlayHitMontage(FName Section, float PlayRate = 1.0f);
 
@@ -111,7 +111,19 @@ protected:
 
 	void DestroyEnemy();
 
+	UFUNCTION(BlueprintCallable)
+	void SetEndAttack(bool IsEnd);
+
 private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool CanSetSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool IsGuxMolten;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	int32 DeadScore;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	int32 ExpImpulseRate;
 
@@ -160,6 +172,7 @@ private:
 	FName AttackRFast;
 	FName AttackL;
 	FName AttackR;
+	FName AttackDouble;
 
 	/** True when in attack range; time to attack!*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -181,11 +194,11 @@ private:
 	float StunChance;   //Stun»úÂÊ
 
 	/** Point for the enemy to move to*/
-	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true", MakeEditWidget = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true", MakeEditWidget = "true"))
 	FVector PatrolPoint;
 
 	/** Second Point for the enemy to move to*/
-	UPROPERTY(EditAnywhere, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true", MakeEditWidget = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Behavior Tree", meta = (AllowPrivateAccess = "true", MakeEditWidget = "true"))
 	FVector PatrolPoint2;
 
 	class AEnemyAIController* EnemyController;
@@ -225,10 +238,10 @@ private:
 	class USoundCue* ImpactSound;
 
 	/** Current health of the enemy*/
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		float Health;
 	/** Maximum health of the enemy*/
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		float MaxHealth;
 
 	/** Name of the head bone */
@@ -241,7 +254,7 @@ private:
 	FTimerHandle HealthBarTimer;
 
 public:	
-
+	FORCEINLINE int32 GetDeadScore() const { return DeadScore; }
 	FORCEINLINE UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
 
 	// Called every frame

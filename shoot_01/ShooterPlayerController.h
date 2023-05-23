@@ -28,4 +28,17 @@ private:
 	/** Variable to hold the HUD Overlay Widget after creating it */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Widgets, meta = (AllowPrivateAccess = "true"))
 		UUserWidget * HUDOverlay;
+
+	//玩家得分
+	int PlayerScore;
+
+
+public:
+
+	void AddPlayerScore(int Num);
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE int GetPlayerScore() const { return PlayerScore; }
+	//增加玩家得分
+	
 };

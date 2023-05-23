@@ -305,13 +305,14 @@ protected:
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 
+	void UpdateItemRarity();
 	void UpdatePulse();
 	void ResetPulseTimer();
 	void StartPulseTimer();
 
 
 public:
-
+	FORCEINLINE void SetItemRarity(EItemRarity Rarity) { ItemRarity = Rarity; }
 	FORCEINLINE UWidgetComponent* GetPickupWidget() const { return PickupWidget; }
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
 	FORCEINLINE UBoxComponent* GetCollisionBox()const { return CollisionBox; }

@@ -202,6 +202,10 @@ private:
 	/** Set this in Blueprints for the default Weapon class */
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = Combat,meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<AWeapon> DefaultWeaponClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<AWeapon> DefaultWeaponClass_1;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<AWeapon> DefaultWeaponClass_2;
 
 	/** The item currently hit by trace in TraceForItems (could be null)*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -316,11 +320,11 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))
 		TArray<AItem*> Inventory;
 
-	const int32 INVENTORY_CAPACITY{ 6 };
+	const int32 INVENTORY_CAPACITY{ 3 };
 
 	/** Delegate for sending slot information to InventoryBar when equipping */
 	UPROPERTY(BlueprintAssignable, Category = Delegates, meta = (AllowPrivateAccess = "true"))
-		FEquipItemDelegate EquipItemDelegate;
+	FEquipItemDelegate EquipItemDelegate;
 
 	/** Delegate for sending slot information for playing the icon animation */
 	UPROPERTY(BlueprintAssignable, Category = Delegates, meta = (AllowPrivateAccess = "true"))
@@ -434,7 +438,7 @@ protected:
 	void EquipWeapon(AWeapon* WeaponToEquip, bool bSwaping = false);//void EquipWeapon(AWeapon* WeaponToEquip);
 
 	/** Detach Weapon and let it fall to the groud*/
-	void DropWeapon();
+	void DropWeapon(int index);
 
 	/** Press key E Select*/
 	void SelectButtonPressed();
@@ -502,7 +506,7 @@ protected:
 
 	void ExChangeInventoryItems(int32 CurrentItemIndex, int32 NewItemIndex);
 
-	int32 GetEmptyInventorySlot();
+	int32 GetEmptyInventorySlot(AWeapon* SwapWeapon);
 
 	void HighlightInventorySlot();
 
@@ -517,6 +521,11 @@ protected:
 	void FinishDeath();
 
 public:
+	AWeapon* PrePickWeapon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat)
+	bool IsCombatState;
+
 	//const 函数不能修改其中变量 使函数本身具有一致性
 	FORCEINLINE AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
 

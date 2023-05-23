@@ -11,7 +11,8 @@
 
 
 
-AShooterPlayerController::AShooterPlayerController()
+AShooterPlayerController::AShooterPlayerController():
+PlayerScore(0)
 {
 
 }
@@ -31,4 +32,10 @@ void AShooterPlayerController::BeginPlay()
 		}
 	}
 
+}
+
+void AShooterPlayerController::AddPlayerScore(int Num)
+{
+	if(Num > 0 && Num <= 100)
+	PlayerScore += Num;
 }

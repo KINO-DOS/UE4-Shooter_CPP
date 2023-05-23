@@ -36,6 +36,14 @@ void AWeapon::Tick(float DeltaTime)
 	UpdateSlideDisplacement();
 }
 
+void AWeapon::SetBaseProperty(EItemRarity Rarity, EWeaponType Type)
+{
+	SetItemRarity(Rarity);
+	WeaponType = Type;
+	UpdateItemRarity(); 
+	UpdateWeapType();
+}
+
 void AWeapon::ThrowWeapon()
 {
 	FRotator MeshRotation{ 0.f, GetItemMesh()->GetComponentRotation().Yaw,0.f };
@@ -61,6 +69,8 @@ void AWeapon::ThrowWeapon()
 		ThrowWeaponTime);
 
 	EnableGlowMaterial();
+	Destroy();
+	
 }
 
 void AWeapon::StartSlideTimer()
@@ -146,7 +156,7 @@ void AWeapon::OnConstruction(const FTransform& Transform)
 			MagazineCapacity = WeaponDataRow->MagazingCapacity;
 			SetPickupSound(WeaponDataRow->PickupSound);
 			SetEquipSound(WeaponDataRow->EquipSound);
-			//SetPickupWidget(WeaponDataRow->PickupWidget);
+			//SetPickupWidget(WeaponDataRow->PickupWidget); //?
 			GetItemMesh()->SetSkeletalMesh(WeaponDataRow->ItemMesh);
 			SetItemName(WeaponDataRow->ItemName);
 			SetIconItem(WeaponDataRow->InventoryIcon);
@@ -197,5 +207,94 @@ void AWeapon::UpdateSlideDisplacement()
 		const float CurveValue{ SlideDisplacementCurve->GetFloatValue(ElapsedTime) };
 		SlideDisplacement = CurveValue * MaxSlideDisplacement;
 		RecoilRotation = CurveValue * MaxRecoilRotation;
+	}
+}
+
+void AWeapon::UpdateWeapType()
+{
+	const FString WeaponTablePath{ TEXT("DataTable'/Game/_Game/DataTable/WeaponDataTable.WeaponDataTable'") };
+	UDataTable* WeaponTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *WeaponTablePath));
+
+	if (WeaponTableObject)
+	{
+		FWeaponDataTable* WeaponDataRow = nullptr;
+
+		switch (WeaponType)
+		{
+		case EWeaponType::EWT_SubmachineGun:
+			WeaponDataRow = WeaponTableObject->FindRow<FWeaponDataTable>(FName("SubmachineGun"), TEXT(""));
+			break;
+		case EWeaponType::EWT_AssaultRifle:
+			WeaponDataRow = WeaponTableObject->FindRow<FWeaponDataTable>(FName("AssaultRifle"), TEXT(""));
+			break;
+		case EWeaponType::EWT_Pistol:
+			WeaponDataRow = WeaponTableObject->FindRow<FWeaponDataTable>(FName("Pistol"), TEXT(""));
+			break;
+		}
+
+		if (WeaponDataRow)
+		{
+			Damage = WeaponDataRow->Damage;
+			HeadShotDamage = WeaponDataRow->HeadShotDamage;
+
+			bAutomatic = WeaponDataRow->bAutomatic;
+			BoneToHide = WeaponDataRow->BoneToHide;
+			AutoFireRate = WeaponDataRow->AutoFireRate;
+			MuzzleFlash = WeaponDataRow->MuzzleFlash;
+			FireSound = WeaponDataRow->FireSound;
+
+			CrosshairsMiddle = WeaponDataRow->CrosshairsMiddle;
+			CrosshairsLeft = WeaponDataRow->CrosshairsLeft;
+			CrosshairsRight = WeaponDataRow->CrosshairsRight;
+			CrosshairsBottom = WeaponDataRow->CrosshairsBottom;
+			CrosshairsTop = WeaponDataRow->CrosshairsTop;
+
+			AmmoType = WeaponDataRow->AmmoType;
+			Ammo = WeaponDataRow->WeaponAmmo;
+			MagazineCapacity = WeaponDataRow->MagazingCapacity;
+			SetPickupSound(WeaponDataRow->PickupSound);
+			SetEquipSound(WeaponDataRow->EquipSound);
+			//SetPickupWidget(WeaponDataRow->PickupWidget);
+			GetItemMesh()->SetSkeletalMesh(WeaponDataRow->ItemMesh);
+			SetItemName(WeaponDataRow->ItemName);
+			SetIconItem(WeaponDataRow->InventoryIcon);
+			SetAmmoIcon(WeaponDataRow->AmmoIcon);
+
+			SetMaterialInstance(WeaponDataRow->MaterialInstance);
+			PreviousMaterialIndex = GetMaterialIndex();
+			GetItemMesh()->SetMaterial(PreviousMaterialIndex, nullptr);
+			SetMaterialIndex(WeaponDataRow->MaterialIndex);
+			SetClipBoneName(WeaponDataRow->ClipBoneName);
+			SetReloadMontageSection(WeaponDataRow->ReloadMontageSection);
+			GetItemMesh()->SetAnimInstanceClass(WeaponDataRow->AnimBP);
+			
+
+			if (BoneToHide != FName(""))
+			{
+			
+
+				
+
+				if (GetItemMesh()->IsBoneHiddenByName(FName("pistol")))
+				{
+					GetItemMesh()->UnHideBoneByName(FName("pistol"));
+					//FString BoneToHideName = BoneToHide.ToString();
+					//UE_LOG(LogTemp, Warning, TEXT("BoneToHide:%s"), *BoneToHideName);
+					//UE_LOG(LogTemp, Warning, TEXT("WeaponDataRow->Bone:%s"), *WeaponDataRow->BoneToHide.ToString());
+				}
+				GetItemMesh()->HideBoneByName(WeaponDataRow->BoneToHide, EPhysBodyOp::PBO_None);
+			}
+		}
+
+		if (GetMaterialInstance())
+		{
+			SetDynamicMaterialInstance(UMaterialInstanceDynamic::Create(GetMaterialInstance(), this));
+			GetDynamicMaterialInstance()->SetVectorParameterValue(TEXT("FresnelColor"), GetGlowColor());
+			GetItemMesh()->SetMaterial(GetMaterialIndex(), GetDynamicMaterialInstance());
+			EnableGlowMaterial();
+		}
+
+
+
 	}
 }
